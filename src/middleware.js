@@ -3,7 +3,7 @@ import NextAuth from 'next-auth';
 import { authConfig } from './auth.config';
 import { NextResponse } from 'next/server';
 
-// Initialize NextAuth with the Edge-compatible config
+// Initialize with the Edge-safe config only
 const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
@@ -30,7 +30,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.svg$).*)',
-  ],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.svg$).*)'],
 };

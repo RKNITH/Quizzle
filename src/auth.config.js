@@ -5,9 +5,10 @@ export const authConfig = {
         error: '/login',
     },
     callbacks: {
+        // This allows the middleware to verify the session via JWT
         authorized({ auth, request: { nextUrl } }) {
-            // Basic authorization logic can live here if preferred
-            return !!auth;
+            const isLoggedIn = !!auth?.user;
+            return isLoggedIn;
         },
         async jwt({ token, user }) {
             if (user) {
@@ -28,5 +29,5 @@ export const authConfig = {
             return session;
         },
     },
-    providers: [], // Empty array here; we add them in auth.ts
+    providers: [], // Keep this empty here
 };
