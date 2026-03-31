@@ -5,10 +5,13 @@ export const authConfig = {
         error: '/login',
     },
     callbacks: {
-        // This allows the middleware to verify the session via JWT
         authorized({ auth, request: { nextUrl } }) {
             const isLoggedIn = !!auth?.user;
-            return isLoggedIn;
+            const isProtectedRoute = ['/dashboard', '/topics', '/quiz', '/results', '/leaderboard', '/profile']
+                .some(prefix => nextUrl.pathname.startsWith(prefix));
+
+            if (isProtectedRoute && !isLoggedIn) return false;
+            return true;
         },
         async jwt({ token, user }) {
             if (user) {
@@ -29,5 +32,5 @@ export const authConfig = {
             return session;
         },
     },
-    providers: [], // Keep this empty here
+    providers: [], // Empty here, filled in auth.js
 };

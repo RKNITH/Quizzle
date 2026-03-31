@@ -21,7 +21,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const isValid = await bcrypt.compare(String(credentials.password), user.hashedPassword);
         if (!isValid) return null;
 
-        // Streak logic
+        // Your streak/login logic stays here
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const lastLogin = user.lastLoginDate ? new Date(user.lastLoginDate) : null;
