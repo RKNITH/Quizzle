@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -43,14 +43,14 @@ function playSound(type) {
   } catch (e) { /* ignore audio errors */ }
 }
 
-export default function QuizPage() {
+function QuizPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const topic = searchParams.get('topic') || 'Arithmetic';
   const initDifficulty = searchParams.get('difficulty') || 'medium';
 
-  const [phase, setPhase] = useState('loading'); // loading | question | feedback | finished
+  const [phase, setPhase] = useState('loading');
   const [question, setQuestion] = useState(null);
   const [currentDifficulty, setCurrentDifficulty] = useState(initDifficulty);
   const [questionNumber, setQuestionNumber] = useState(0);
@@ -68,7 +68,6 @@ export default function QuizPage() {
   const timerRef = useRef(null);
   const hasTimedOutRef = useRef(false);
 
-  // Refs to avoid stale closures in timer
   const phaseRef = useRef(phase);
   const questionRef = useRef(question);
   const currentDifficultyRef = useRef(currentDifficulty);
@@ -144,12 +143,10 @@ export default function QuizPage() {
     }
   }, [topic]);
 
-  // Initial load
   useEffect(() => {
     fetchQuestion(initDifficulty, []);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Timer logic
   useEffect(() => {
     clearInterval(timerRef.current);
     if (phase !== 'question') return;
@@ -158,7 +155,6 @@ export default function QuizPage() {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timerRef.current);
-          // Only timeout once
           if (!hasTimedOutRef.current) {
             hasTimedOutRef.current = true;
             if (soundEnabled) playSound('timeout');
@@ -232,10 +228,10 @@ export default function QuizPage() {
   const timerPct = (timeLeft / TIME_LIMITS[currentDifficulty]) * 100;
   const timerColor = timeLeft > TIME_LIMITS[currentDifficulty] * 0.5
     ? '#10b981' : timeLeft > TIME_LIMITS[currentDifficulty] * 0.25
-    ? '#f59e0b' : '#ef4444';
+      ? '#f59e0b' : '#ef4444';
   const timerTextColor = timeLeft > TIME_LIMITS[currentDifficulty] * 0.5
     ? 'text-green-400' : timeLeft > TIME_LIMITS[currentDifficulty] * 0.25
-    ? 'text-yellow-400' : 'text-red-400 animate-pulse';
+      ? 'text-yellow-400' : 'text-red-400 animate-pulse';
 
   const diffColors = { easy: 'text-green-400', medium: 'text-yellow-400', hard: 'text-red-400' };
 
@@ -243,7 +239,6 @@ export default function QuizPage() {
     <div className="min-h-screen bg-[#0a0a0a]">
       <Navbar />
       <div className="pt-20 pb-10 px-4 max-w-3xl mx-auto">
-        {/* Top progress bar */}
         <div className="mb-6">
           <div className="flex items-center justify-between text-sm text-slate-400 mb-2">
             <span>Question {Math.min(questionNumber + 1, TOTAL_QUESTIONS)} / {TOTAL_QUESTIONS}</span>
@@ -267,7 +262,6 @@ export default function QuizPage() {
           </div>
         </div>
 
-        {/* Loading state */}
         {phase === 'loading' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card p-10 text-center">
             <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-4" />
@@ -276,11 +270,9 @@ export default function QuizPage() {
           </motion.div>
         )}
 
-        {/* Question */}
         {(phase === 'question' || phase === 'feedback') && question && (
           <AnimatePresence mode="wait">
             <motion.div key={questionNumber} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-4">
-              {/* Timer */}
               {phase === 'question' && (
                 <div className="glass-card p-3 flex items-center gap-3">
                   <span className={`text-2xl font-bold w-10 text-center tabular-nums ${timerTextColor}`}>{timeLeft}</span>
@@ -291,20 +283,17 @@ export default function QuizPage() {
                 </div>
               )}
 
-              {/* Question card */}
               <div className="glass-card p-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <span className={`text-xs px-2 py-1 rounded-full border ${
-                    question.difficulty === 'easy' ? 'border-green-500/30 text-green-400 bg-green-500/10'
-                    : question.difficulty === 'medium' ? 'border-yellow-500/30 text-yellow-400 bg-yellow-500/10'
-                    : 'border-red-500/30 text-red-400 bg-red-500/10'
-                  }`}>{question.difficulty}</span>
+                  <span className={`text-xs px-2 py-1 rounded-full border ${question.difficulty === 'easy' ? 'border-green-500/30 text-green-400 bg-green-500/10'
+                      : question.difficulty === 'medium' ? 'border-yellow-500/30 text-yellow-400 bg-yellow-500/10'
+                        : 'border-red-500/30 text-red-400 bg-red-500/10'
+                    }`}>{question.difficulty}</span>
                   <span className="text-xs text-slate-500">{question.topic}</span>
                 </div>
                 <p className="text-lg md:text-xl font-medium leading-relaxed">{question.question}</p>
               </div>
 
-              {/* Options */}
               <div className="grid gap-3">
                 {(question.options || []).map((option, i) => {
                   const letter = option.charAt(0).toUpperCase();
@@ -329,7 +318,6 @@ export default function QuizPage() {
                 })}
               </div>
 
-              {/* Feedback */}
               <AnimatePresence>
                 {phase === 'feedback' && (
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
@@ -354,7 +342,6 @@ export default function QuizPage() {
           </AnimatePresence>
         )}
 
-        {/* Finished */}
         {phase === 'finished' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card p-10 text-center">
             <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-4" />
@@ -364,5 +351,17 @@ export default function QuizPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function QuizPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+      </div>
+    }>
+      <QuizPageInner />
+    </Suspense>
   );
 }

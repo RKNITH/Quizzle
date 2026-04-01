@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -19,7 +19,7 @@ function Confetti() {
       y: Math.random() * canvas.height - canvas.height,
       vx: (Math.random() - 0.5) * 4,
       vy: Math.random() * 4 + 2,
-      color: ['#8b5cf6','#3b82f6','#10b981','#f59e0b','#ef4444'][Math.floor(Math.random()*5)],
+      color: ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'][Math.floor(Math.random() * 5)],
       size: Math.random() * 8 + 4,
       rotation: Math.random() * 360,
       rotationSpeed: (Math.random() - 0.5) * 6,
@@ -34,7 +34,7 @@ function Confetti() {
         ctx.translate(p.x, p.y);
         ctx.rotate((p.rotation * Math.PI) / 180);
         ctx.fillStyle = p.color;
-        ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
         ctx.restore();
       });
       frame = requestAnimationFrame(animate);
@@ -46,7 +46,7 @@ function Confetti() {
   return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-50" />;
 }
 
-export default function ResultsPage() {
+function ResultsPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -79,7 +79,6 @@ export default function ResultsPage() {
           <p className="text-slate-400">{topic} Quiz Complete</p>
         </motion.div>
 
-        {/* Stats */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
           className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           {[
@@ -97,7 +96,6 @@ export default function ResultsPage() {
           ))}
         </motion.div>
 
-        {/* New Badges */}
         {newBadges.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
             className="glass-card p-6 mb-6 border-2 border-yellow-500/30 bg-yellow-500/5">
@@ -122,7 +120,6 @@ export default function ResultsPage() {
           </motion.div>
         )}
 
-        {/* Performance message */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
           className="glass-card p-5 mb-6 text-center">
           {accuracy >= 90 && <p className="text-green-400">🔥 Exceptional performance! You&apos;ve mastered this topic.</p>}
@@ -131,7 +128,6 @@ export default function ResultsPage() {
           {accuracy < 50 && <p className="text-orange-400">📖 Don&apos;t give up! Review the topic and try again. You&apos;ve got this!</p>}
         </motion.div>
 
-        {/* Actions */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
           className="flex flex-col sm:flex-row gap-3">
           <Link href="/topics" className="flex-1">
@@ -155,5 +151,17 @@ export default function ResultsPage() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+      </div>
+    }>
+      <ResultsPageInner />
+    </Suspense>
   );
 }
